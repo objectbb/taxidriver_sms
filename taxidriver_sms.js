@@ -2,13 +2,16 @@ var request = require('request');
 var twilio = require('twilio');
 var mongoose = require('mongoose');
 var express = require('express');
+var bodyParser = require('body-parser');
 var app = express();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+	extended: true
+}));
 
 var accountSid = 'AC0cabfe79a2b5b8273320781fca4c09ed';
 var authToken = "985d9014c96813f6110cde04b83bb8bb";
 var client = new twilio.RestClient(accountSid, authToken);
-
-
 
 app.set('port', (process.env.PORT || 5000));
 
@@ -25,44 +28,30 @@ var locSchema = mongoose.Schema({
 var nearviolations = mongoose.model('violations', locSchema);
 
 var geocodeer = {
-	limit: 2500, //day
-	url: "https://maps.googleapis.com/maps/api/geocode/json?address={{ADDRESS}}&key={{TOKEN}}",
-	token: "AIzaSyBqK4f8zbMrK4K5cxWb8_10Zkbk7LHMrKE",
+	url: "https://maps.googleapis.com/maps/api/geocode/json?address={{ADDRESS}}",
 	requesturl: function(url, address, token) {
-		return url.replace("{{ADDRESS}}", address).replace("{{TOKEN}}", token);
+		return url.replace("{{ADDRESS}}", address);
 	},
-	response: function(body) {
-		if (body.results != undefined && body.results[0] != undefined && body.results[0].geometry != undefined && body.results[0].geometry.location != undefined) {
-			var loc = body.results[0].geometry.location;
-			var addr = changeCase.upper(body.results[0].formatted_address);
-			var cmpnts = body.results[0].address_components;
-			var shortaddr = cmpnts[0]["short_name"] + " " + changeCase.upper(cmpnts[1]["short_name"]) + "," + cmpnts[2]["short_name"];
-
-			return {
-				loc: loc,
-				fulladdress: addr
-			};
-		}
-
-		return null;
+	response: function(data) {
+		var loc = JSON.parse(data).results[0].geometry.location;
+		return (loc) ? {
+			lat: loc.lat,
+			lng: loc.lng
+		} : null;
 	}
 };
 
-app.post('/', function(request, response) {
+app.post('/', function(req, res) {
 
-	//recieve address
-	var address = request.body;
+
+	var address = req.body.Body;
 
 	console.log(address);
 
 	//geoloc address
-	
+
 	var gourl = geocodeer.requesturl(geocodeer.url, address, geocodeer.token);
 
-
-	
-
-/*
 	request(gourl, function(err, res, body) {
 		if (err) {
 			JSON.stringify(err);
@@ -70,34 +59,38 @@ app.post('/', function(request, response) {
 		}
 
 		if (res.statusCode != 200) return done(res.statusCode);
-		done();
+
 		var location = geocodeer.response(body);
 
-		
 		if (!location)
-			response.send("Submitted Address Failed");
-		//return violations
-		var rs = nearviolations.find({
-			loc: {
-				'$near': [location.lng, location.lat]
-			}
-		}).limit(5);
-		//return no violations
+			res.send("Submitted Address Failed");
 
-		client.messages.create({
+		console.log(JSON.stringify(location));
+		//return violations
+		nearviolations.find({
+			loc: {
+				'$near': [parseFloat(location.lng), parseFloat(location.lat)]
+			}
+		}).limit(5).find({}, function (err, rs) {
+		  if(err) {/*error!!!*/}
+
+		  	client.messages.create({
 			to: '+17739809873',
 			from: '+17736090911',
-			body: JSON.stringify(rs)
+			body: (rs) ? rs : "No results"
 		}, function(error, message) {
 			if (error) {
-				response.send(error.message);
+				res.send(error.message);
 			}
+		});
+		 
 		});
 		
 
+
 	});
-*/
-	response.send("made it this far");
+
+	res.send("made it this far");
 });
 
 app.listen(app.get('port'), function() {
