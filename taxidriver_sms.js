@@ -48,27 +48,32 @@ var geocodeer = {
 	}
 };
 
-app.get('/', function(request, response) {
+app.post('/', function(request, response) {
 
 	//recieve address
 	var address = request.body;
+
+	console.log(address);
 
 	//geoloc address
 	
 	var gourl = geocodeer.requesturl(geocodeer.url, address, geocodeer.token);
 
-	console.log(address);
-	response.send("Computing...");
+
+	
+
+/*
 	request(gourl, function(err, res, body) {
 		if (err) {
 			JSON.stringify(err);
 			return done(err);
 		}
+
 		if (res.statusCode != 200) return done(res.statusCode);
 		done();
 		var location = geocodeer.response(body);
 
-		/*
+		
 		if (!location)
 			response.send("Submitted Address Failed");
 		//return violations
@@ -88,10 +93,10 @@ app.get('/', function(request, response) {
 				response.send(error.message);
 			}
 		});
-		*/
+		
 
 	});
-
+*/
 	response.send("made it this far");
 });
 
