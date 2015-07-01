@@ -3,6 +3,7 @@ var twilio = require('twilio');
 var mongoose = require('mongoose');
 var express = require('express');
 var bodyParser = require('body-parser');
+var _ = require('lodash');
 var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
@@ -17,6 +18,9 @@ app.set('port', (process.env.PORT || 5000));
 mongoose.connect('mongodb://taxidriver:taxidriver@ds041992.mongolab.com:41992/taxidriver');
 var locSchema = mongoose.Schema({
     Address: String,
+    Date: Date,
+    Amount: Number,
+    Description: String,
     loc: {
         type: [Number], // [<longitude>, <latitude>]
         index: '2d' // create the geospatial index
@@ -56,11 +60,13 @@ app.post('/', function(req, res) {
                 $near: [location.lng, location.lat],
                 $maxDistance: 5/6371
             }
-        }).limit(5).exec(function(err, locs) {
+        }).limit(5).exec(function(err, rawlocs) {
             if (err)
                 console.log(err.message);
 
-            console.log(locs);
+            var locs = _.map(rawlocs, function(item){ return item.Date + " | " +
+             item.Address + " | " + item.Description + " | " + item.Amount + "..."});
+
             client.messages.create({
                 to: '+17739809873',
                 from: '+17736090911',
