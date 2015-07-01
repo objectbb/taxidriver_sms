@@ -4,6 +4,8 @@ var mongoose = require('mongoose');
 var express = require('express');
 var bodyParser = require('body-parser');
 var _ = require('lodash');
+var moment = require('moment');
+
 var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
@@ -41,9 +43,13 @@ var geocodeer = {
     }
 };
 app.post('/', function(req, res) {
-    var address = req.body.Body;
-    console.log(address);
+    var reqaddress = req.body.Body;
+    console.log(reqaddress);
     //geoloc address
+
+    var tophnumber = reqaddress.split('@')[0];
+    var address = reqaddress.split('@')[1];
+
     var gourl = geocodeer.requesturl(geocodeer.url, address, geocodeer.token);
     request(gourl, function(err, res, body) {
         if (err) {
@@ -64,11 +70,11 @@ app.post('/', function(req, res) {
             if (err)
                 console.log(err.message);
 
-            var locs = _.map(rawlocs, function(item){ return item.Date + " | " +
+            var locs = _.map(rawlocs, function(item){ return moment(item.Date).format('L') + " | " +
              item.Address + " | " + item.Description + " | " + item.Amount + "..."});
 
             client.messages.create({
-                to: '+17739809873',
+                to: tophnumber,
                 from: '+17736090911',
                 body: (locs) ? JSON.stringify(locs) : "No results"
             }, function(error, message) {
