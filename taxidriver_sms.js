@@ -47,8 +47,10 @@ app.post('/', function(req, res) {
     console.log(reqaddress);
     //geoloc address
 
-    var tophnumber = reqaddress.split('@')[0];
-    var address = reqaddress.split('@')[1];
+    var array_ph_address = reqaddress.split('@');
+
+    var tophnumber = "+1" + array_ph_address[0];
+    var address =array_ph_address[1];
 
     var gourl = geocodeer.requesturl(geocodeer.url, address, geocodeer.token);
     request(gourl, function(err, res, body) {
@@ -73,10 +75,11 @@ app.post('/', function(req, res) {
             var locs = _.map(rawlocs, function(item){ return moment(item.Date).format('L') + " | " +
              item.Address + " | " + item.Description + " | " + item.Amount + "..."});
 
+            console.log(locs.length);
             client.messages.create({
                 to: tophnumber,
                 from: '+17736090911',
-                body: (locs) ? JSON.stringify(locs) : "No results"
+                body: (locs.length > 0) ? JSON.stringify(locs) : "No results"
             }, function(error, message) {
                 if (error) {
                      console.log(error.message);
