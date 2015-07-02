@@ -2,6 +2,7 @@ var request = require('request');
 var twilio = require('twilio');
 var mongoose = require('mongoose');
 var express = require('express');
+var changeCase = require('change-case');
 var bodyParser = require('body-parser');
 var _ = require('lodash');
 var moment = require('moment');
@@ -48,9 +49,13 @@ app.post('/', function(req, res) {
     //geoloc address
 
     var array_ph_address = reqaddress.split('@');
-
     var tophnumber = "+1" + array_ph_address[0];
-    var address =array_ph_address[1];
+
+    if(! array_ph_address[1]) 
+        sendText(tophnumber, "***ERROR***Missing address... i.e. 3121112222@835 N Michigan***");
+
+    var address =  changeCase.lower(array_ph_address[1]);
+    var address = address + ((address.indexOf("chicago")) ? ",Chicago, IL" : "");
 
     var gourl = geocodeer.requesturl(geocodeer.url, address, geocodeer.token);
     request(gourl, function(err, res, body) {
@@ -73,22 +78,26 @@ app.post('/', function(req, res) {
                 console.log(err.message);
 
             var locs = _.map(rawlocs, function(item){ return moment(item.Date).format('L') + " | " +
-             item.Address + " | " + item.Description + " | " + item.Amount + "..."});
+             item.Address + " | " + item.Description + " | " + item.Amount + "***"});
 
             console.log(locs.length);
-            client.messages.create({
+            sendText(tophnumber, ((locs.length > 0) ? JSON.stringify(locs) : "No results"));
+        });
+    });
+    res.send("end of");
+});
+app.listen(app.get('port'), function() {
+    console.log("Node app is running on port:" + app.get('port'))
+})
+
+var sendText= function(tophnumber, msg){
+     client.messages.create({
                 to: tophnumber,
                 from: '+17736090911',
-                body: (locs.length > 0) ? JSON.stringify(locs) : "No results"
+                body: msg
             }, function(error, message) {
                 if (error) {
                      console.log(error.message);
                 }
             });
-        });
-    });
-    res.send("made it this far");
-});
-app.listen(app.get('port'), function() {
-    console.log("Node app is running on port:" + app.get('port'))
-})
+}
