@@ -73,7 +73,7 @@ app.post('/', function(req, res) {
                 $near: [location.lng, location.lat],
                 $maxDistance: 5/6371
             }
-        }).limit(5).exec(function(err, rawlocs) {
+        }).sort({Amount: -1, Date : -1}).limit(5).exec(function(err, rawlocs) {
             if (err)
                 console.log(err.message);
 
@@ -89,6 +89,7 @@ app.post('/', function(req, res) {
 app.listen(app.get('port'), function() {
     console.log("Node app is running on port:" + app.get('port'))
 })
+
 
 var sendText= function(tophnumber, msg){
      client.messages.create({
