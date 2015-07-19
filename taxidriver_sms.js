@@ -66,7 +66,7 @@ app.post('/', function(req, res) {
         if (res.statusCode != 200) return done(res.statusCode);
         var location = geocodeer.response(body);
         if (!location) res.send("Submitted Address Failed");
-        console.log(JSON.stringify(location));
+        //console.log(JSON.stringify(location));
         //return violations
         nearviolations.find({
             loc: {
@@ -80,7 +80,7 @@ app.post('/', function(req, res) {
             var locs = _.map(rawlocs, function(item){ return moment(item.Date).format('L') + " | " +
              item.Address + " | " + item.Description + " | " + item.Amount + "***"});
 
-            console.log(locs.length);
+           // console.log(locs.length);
             sendText(tophnumber, ((locs.length > 0) ? JSON.stringify(locs) : "No results"));
         });
     });
