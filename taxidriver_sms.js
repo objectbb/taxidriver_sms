@@ -45,16 +45,12 @@ var geocodeer = {
 };
 app.post('/', function(req, res) {
     var reqaddress = req.body.Body;
-    console.log(reqaddress);
-    //geoloc address
+    var tophnumber = req.body.From;
 
-    var array_ph_address = reqaddress.split('@');
-    var tophnumber = "+1" + array_ph_address[0];
+    if(! reqaddress) 
+        sendText(tophnumber, "***ERROR***i.e. 835 N Michigan***");
 
-    if(! array_ph_address[1]) 
-        sendText(tophnumber, "***ERROR***Missing address... i.e. 3121112222@835 N Michigan***");
-
-    var address =  changeCase.lower(array_ph_address[1]);
+    var address =  changeCase.lower(reqaddress);
     var address = address + ((address.indexOf("chicago")) ? ",Chicago, IL" : "");
 
     var gourl = geocodeer.requesturl(geocodeer.url, address, geocodeer.token);
